@@ -1,0 +1,23 @@
+name: build
+on: [workflow_dispatch, push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare
+        run: |
+          unzip -q mcjsmenu.zip
+          git clone https://github.com/bellard/quickjs /tmp/qjs
+          cd /tmp/qjs && git checkout 2024-01-13
+          mkdir -p $GITHUB_WORKSPACE/mcjsmenu/jni/quickjs
+          cp quickjs.c quickjs.h quickjs-atom.h quickjs-opcode.h cutils.c cutils.h libregexp.c libregexp.h libregexp-opcode.h libunicode.c libunicode.h libunicode-table.h list.h $GITHUB_WORKSPACE/mcjsmenu/jni/quickjs/
+      - name: Build
+        run: |
+          cd mcjsmenu
+          sed -i 's/android-16/android-21/' jni/Application.mk
+          $ANDROID_NDK_HOME/ndk-build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: libmcjsmenu
+          path: mcjsmenu/libs/armeabi-v7a/libmcjsmenu.so
